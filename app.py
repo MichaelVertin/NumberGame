@@ -18,19 +18,6 @@ def index():
 
 @socketio.on('update_state')
 def update_state():
-    cards = list()
-    [cards.append({"owner": "ALICE", "index": index, "value": "---"}) \
-        for index in range(10)]
-    [cards.append({"owner": "BOB", "index": index, "value": "---"}) \
-        for index in range(10)]
-    """
-    cards = [
-        {"owner": "ALICE", "index": 0, "value": "5 / 7"}, 
-        {"owner": "BOB", "index": 0, "value": "42 / 24"}, 
-        {"owner": "BOB", "index": 1, "value": "123 / 321"}, 
-    ]
-    """
-    # // emit('set_state', cards)
     emit('set_state', GLOBAL_GAME.get_state())
 
 @socketio.on('check_selection')
