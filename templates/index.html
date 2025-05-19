@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hello SocketIO</title>
+  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+</head>
+<body>
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  *, *::before, *::after {
+    box-sizing: inherit;
+  }
+
+  .window {
+    display: grid;
+    grid-template-rows: 20% 80%;
+    height: 100vh;
+  }
+  
+  .sidebar {
+    display: grid;
+    grid-template-rows: 20% 60% 20%;
+    height: 100%;
+  }
+
+  .play-field {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5 columns per row */
+    gap: 10px;
+    width: 100%;
+    margin: 0 auto;    /* Centers the grid horizontally */
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .textbox {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    font-size: 1rem;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: 20% 80%;
+    width: 100%;
+  }
+
+  .play-field-total {
+    display: grid;
+    grid-template-rows: 40% 20% 40%;
+    height: 100%;
+  }
+  </style>
+
+  <div class="window">
+    <div class="title">
+      <h1>Hello World Game</h1>
+      <button id="confirmBtn">Confirm</button>
+      <div id="message"></div>
+    </div>
+    
+   <div class="board">
+     <div class="sidebar">
+       <div class="name name-opponent">
+          Alice
+       </div>
+       <div class="deck">
+       </div>
+       <div class="name name-self">
+         Bob (you)
+       </div>
+     </div>
+     <div class="play-field-total">
+       <div class="play-field play-field-self">
+         <button class="textbox" onclick="select_card(0, 0)">52 / 12</button>
+         <button class="textbox" onclick="select_card(1, 0)">14 / 52</button>
+         <button class="textbox" onclick="select_card(2, 0)"></button>
+         <button class="textbox" onclick="select_card(3, 0)"></button>
+         <button class="textbox" onclick="select_card(4, 0)"></button>
+         <button class="textbox" onclick="select_card(5, 0)"></button>
+         <button class="textbox" onclick="select_card(6, 0)"></button>
+         <button class="textbox" onclick="select_card(7, 0)"></button>
+         <button class="textbox" onclick="select_card(8, 0)"></button>
+         <button class="textbox" onclick="select_card(9, 0)"></button>
+       </div>
+       <div></div> 
+       <div class="play-field play-field-self">
+         <button class="textbox" onclick="select_card(0, 1)">19 / 42</button>
+         <button class="textbox" onclick="select_card(1, 1)"></button>
+         <button class="textbox" onclick="select_card(2, 1)"></button>
+         <button class="textbox" onclick="select_card(3, 1)"></button>
+         <button class="textbox" onclick="select_card(4, 1)"></button>
+         <button class="textbox" onclick="select_card(5, 1)"></button>
+         <button class="textbox" onclick="select_card(6, 1)"></button>
+         <button class="textbox" onclick="select_card(7, 1)"></button>
+         <button class="textbox" onclick="select_card(8, 1)"></button>
+         <button class="textbox" onclick="select_card(9, 1)"></button>
+       </div>
+     </div>
+    </div>
+  </div>
+
+</body>
+</html>
+
+
+
+
+
