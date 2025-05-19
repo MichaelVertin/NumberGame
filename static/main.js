@@ -1,20 +1,15 @@
-let NAME_SELF = "BOB";
-let NAME_OPPONENT = "ALICE";
+const NAME_SELF = "BOB";
+const NAME_OPPONENT = "ALICE";
 const socket = io();
 
-// temp for testing
+// button initialization after DOM loaded
 document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("confirmBtn").onclick = function () {
-    socket.emit("confirm", { user: "Bob", selected: [42, 93] });
+  // set up sendMove button
+  document.getElementById("sendMove").onclick = function () {
+    const selections = get_selections();
+    socket.emit("send_move", selections);
   };
-
-  socket.on("server_response", (data) => {
-    document.getElementById("message").innerText = data.message;
-  });
 });
-
-
-
 
 // card access /////////////////////////////////////////////////////////
 function get_card_id(owner,index) {
@@ -55,6 +50,9 @@ function get_owner(player_id) {
   return NAME_SELF;
 }
 
+
+// called when user clicks on a card
+// toggles whether the card is selected
 function select_card(index, player_id) {
   let owner_name = get_owner(player_id);
   console.log(owner_name, "'s card selected:", index);
@@ -64,12 +62,18 @@ function select_card(index, player_id) {
 
   const isSelected = card_obj.getAttribute("data-selected") == "true";
   card_obj.setAttribute("data-selected", !isSelected);
-  
+
+  // automatically check selection
   check_selection();
 }
 
 
 function check_selection() {
+  const selected_cards = get_selections(); 
+  socket.emit("check_selection", selected_cards);
+}
+
+function get_selections() {
   const selected_cards = [];
   const buttons = document.querySelectorAll('.textbox');
 
@@ -81,18 +85,15 @@ function check_selection() {
       selected_cards.push(card_id);
     }
   });
-
-  socket.emit("check_selection", selected_cards);
+  return selected_cards;
 }
-
 
 socket.on('set_selection_status', (response) => {
   if(response.status=="True") {
-    console.log("Success:", response.message);
-    socket.emit("update_state", {});
+    set_status_message("Success: " + response.message);
   }
   else {
-    console.log("Fail:", response.message);
+    set_status_message("Failed: " + response.message);
   }
 });
 
@@ -106,6 +107,9 @@ socket.on('set_state', (cards) => {
   });
 });
 
-
+function set_status_message(message) {
+  const message_field = document.getElementById("status-message");
+  message_field.innerText = message; 
+}
 
 

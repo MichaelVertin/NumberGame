@@ -18,7 +18,7 @@ def handle_confirm(data):
     emit('server_response', {'message': 'Hello from Flask!'}, broadcast=True)
 
 @socketio.on('update_state')
-def update_state(data):
+def update_state():
     cards = list()
     [cards.append({"owner": "ALICE", "index": index, "value": "---"}) \
         for index in range(10)]
@@ -38,7 +38,10 @@ def update_state(data):
 def check_selection(selected_ids):
     emit('set_selection_status', {"status": "True", "message": "testing..."});
 
-
+@socketio.on('send_move')
+def send_move(selected_ids):
+    # TODO: implement move sending logic
+    update_state()
 
 if __name__ == '__main__':
     print("Running on port 5000")
