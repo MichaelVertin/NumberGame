@@ -19,12 +19,24 @@ def handle_confirm(data):
 
 @socketio.on('update_state')
 def update_state(data):
+    cards = list()
+    [cards.append({"owner": "ALICE", "index": index, "value": "---"}) \
+        for index in range(10)]
+    [cards.append({"owner": "BOB", "index": index, "value": "---"}) \
+        for index in range(10)]
+    """
     cards = [
         {"owner": "ALICE", "index": 0, "value": "5 / 7"}, 
         {"owner": "BOB", "index": 0, "value": "42 / 24"}, 
         {"owner": "BOB", "index": 1, "value": "123 / 321"}, 
     ]
+    """
     emit('set_state', cards)
+
+
+@socketio.on('check_selection')
+def check_selection(selected_ids):
+    emit('set_selection_status', {"status": "True", "message": "testing..."});
 
 
 
