@@ -1,32 +1,27 @@
-let NAME_SELF = "BOB";
-let NAME_OPPONENT = "ALICE";
+const NAME_SELF = "BOB";
+const NAME_OPPONENT = "ALICE";
+const socket = io();
 
-// temp for testing
+// button initialization after DOM loaded
 document.addEventListener("DOMContentLoaded", () => {
-  const socket = io();
-
-  document.getElementById("confirmBtn").onclick = function () {
-    socket.emit("confirm", { user: "Bob", selected: [42, 93] });
+  // set up sendMove button
+  document.getElementById("sendMove").onclick = function () {
+    const selections = get_selections();
+    socket.emit("send_move", selections);
   };
-
-  socket.on("server_response", (data) => {
-    document.getElementById("message").innerText = data.message;
-  });
 });
 
-function select_card(index, player_id) {
-  let owner_name = get_owner(player_id);
-  console.log(owner_name, "'s card selected:", index);
-}
-
+// card access /////////////////////////////////////////////////////////
 function get_card_id(owner,index) {
   return { owner, index };
 }
 
 function get_card_obj(card_id) {
   const buttons = document.querySelectorAll('.textbox');
-  var index = card_id.get("index");
-  var owner = card_id.get("owner");
+  
+
+  var index = card_id.index;
+  var owner = card_id.owner;
 
   if(owner==NAME_SELF) {
     index += 10;
@@ -34,6 +29,9 @@ function get_card_obj(card_id) {
   return buttons[index];
 }
 
+
+
+// card data access /////////////////////////////////////////////////////
 function get_card_value(card_id) {
   var card_obj = get_card_obj(card_id);
   return card_obj.textContent;
@@ -44,6 +42,7 @@ function set_card_value(card_id,value) {
   card_obj.textContent = value;
 }
 
+// card selection ///////////////////////////////////////////////////////
 function get_owner(player_id) {
   if(player_id==0) {
     return NAME_OPPONENT;
@@ -51,5 +50,66 @@ function get_owner(player_id) {
   return NAME_SELF;
 }
 
+
+// called when user clicks on a card
+// toggles whether the card is selected
+function select_card(index, player_id) {
+  let owner_name = get_owner(player_id);
+  console.log(owner_name, "'s card selected:", index);
+
+  let card_id = get_card_id(owner_name,index);
+  let card_obj = get_card_obj(card_id);
+
+  const isSelected = card_obj.getAttribute("data-selected") == "true";
+  card_obj.setAttribute("data-selected", !isSelected);
+
+  // automatically check selection
+  check_selection();
+}
+
+
+function check_selection() {
+  const selected_cards = get_selections(); 
+  socket.emit("check_selection", selected_cards);
+}
+
+function get_selections() {
+  const selected_cards = [];
+  const buttons = document.querySelectorAll('.textbox');
+
+  buttons.forEach((card_obj, ind) => {
+    if (card_obj.dataset.selected == "true") {
+      const index = ind % 10;
+      const owner_id = Math.floor(ind / 10);
+      const card_id = get_card_id(get_owner(owner_id), index);
+      selected_cards.push(card_id);
+    }
+  });
+  return selected_cards;
+}
+
+socket.on('set_selection_status', (response) => {
+  if(response.status=="True") {
+    set_status_message("Success: " + response.message);
+  }
+  else {
+    set_status_message("Failed: " + response.message);
+  }
+});
+
+// update game state
+socket.on('set_state', (cards) => {
+  console.log("Received cards:", cards);
+
+  cards.forEach(card => {
+    let card_id = card;
+    set_card_value(card_id,card.value);
+  });
+});
+
+function set_status_message(message) {
+  const message_field = document.getElementById("status-message");
+  message_field.innerText = message; 
+}
 
 
