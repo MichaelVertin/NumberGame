@@ -22,14 +22,22 @@ def update_state():
 
 @socketio.on('check_selection')
 def check_selection(selected_ids):
-    status = GLOBAL_GAME.check_turn(selected_ids)
-    emit('set_selection_status', status)
-    # emit('set_selection_status', {"status": "True", "message": "testing..."});
+    try:
+        status = GLOBAL_GAME.check_turn(selected_ids)
+        emit('set_selection_status', status)
+    except Exception as e:
+        emit('set_selection_status', {"status": "False", "message":str(e)})
+
 
 @socketio.on('send_move')
 def send_move(selected_ids):
-    GLOBAL_GAME.submit_turn(selected_ids)
-    update_state()
+    try:
+        GLOBAL_GAME.submit_turn(selected_ids)
+        response = update_state()
+        emit('set_selection_status', response)
+    except Exception as e:
+        emit('set_selection_status', {"status": "False", "message":str(e)})
+
 
 if __name__ == '__main__':
     print("Running on port 5000")
