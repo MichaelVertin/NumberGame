@@ -73,12 +73,20 @@ function select_card(index, owner) {
   card_obj.setAttribute("data-selected", !isSelected);
 
   // automatically check selection
-  set_status_message("Checking...");
+  check_selection();
+}
+
+function select_deck() {
+  const deck_obj = document.getElementById("deck");
+  const isSelected = deck_obj.getAttribute("data-selected") == "true";
+
+  deck_obj.setAttribute("data-selected", !isSelected);
   check_selection();
 }
 
 function check_selection() {
   const selected_cards = get_selections(); 
+  set_status_message("Verifying Selection...")
   socket.emit("check_selection", selected_cards);
 }
 
@@ -101,6 +109,10 @@ function get_selections() {
     }
   });
 
+  const deck_obj = document.getElementById("deck");
+  if (deck_obj.getAttribute("data-selected") == "true") {
+    selected_cards.push({"type": "deck"});
+  }
   return selected_cards;
 }
 
