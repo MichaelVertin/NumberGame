@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // set up sendMove button
   document.getElementById("sendMove").onclick = function () {
     const selections = get_selections();
+    set_status_message("Sending Move...");
     socket.emit("send_move", selections);
   };
 
@@ -19,19 +20,26 @@ function get_card_id(owner,index) {
 }
 
 function get_card_obj(card_id) {
-  const buttons = document.querySelectorAll('.textbox');
-  
-
-  var index = card_id.index;
-  var owner = card_id.owner;
-
-  if(owner==NAME_SELF) {
-    index += 10;
-  }
-  return buttons[index];
+  const cards = get_cards(card_id.owner);
+  return cards[card_id.index];
 }
 
+function get_field_container(owner_name) {
+  let field_name = "";
+  if(owner_name == NAME_SELF) {
+    field_name = ".play-field-self";
+  }
+  else {
+    field_name = ".play-field-opponent";
+  }
+  const container = document.querySelector(field_name);
+  return container;
+}
 
+function get_cards(owner_name) {
+  const container = get_field_container(owner_name);
+  return container.querySelectorAll("button");
+}
 
 // card data access /////////////////////////////////////////////////////
 function get_card_value(card_id) {
@@ -55,9 +63,8 @@ function get_owner(player_id) {
 
 // called when user clicks on a card
 // toggles whether the card is selected
-function select_card(index, player_id) {
-  let owner_name = get_owner(player_id);
-  console.log(owner_name, "'s card selected:", index);
+function select_card(index, owner) {
+  let owner_name = owner;
 
   let card_id = get_card_id(owner_name,index);
   let card_obj = get_card_obj(card_id);
@@ -66,9 +73,9 @@ function select_card(index, player_id) {
   card_obj.setAttribute("data-selected", !isSelected);
 
   // automatically check selection
+  set_status_message("Checking...");
   check_selection();
 }
-
 
 function check_selection() {
   const selected_cards = get_selections(); 
@@ -77,16 +84,23 @@ function check_selection() {
 
 function get_selections() {
   const selected_cards = [];
-  const buttons = document.querySelectorAll('.textbox');
 
-  buttons.forEach((card_obj, ind) => {
-    if (card_obj.dataset.selected == "true") {
-      const index = ind % 10;
-      const owner_id = Math.floor(ind / 10);
-      const card_id = get_card_id(get_owner(owner_id), index);
+  get_cards(NAME_SELF).forEach((card_obj, index) => {
+    const isSelected = card_obj.dataset.selected == "true";
+    if(isSelected) {
+      const card_id = get_card_id(NAME_SELF, index);
       selected_cards.push(card_id);
     }
   });
+
+  get_cards(NAME_OPPONENT).forEach((card_obj, index) => {
+    const isSelected = card_obj.dataset.selected == "true";
+    if(isSelected) {
+      const card_id = get_card_id(NAME_OPPONENT, index);
+      selected_cards.push(card_id);
+    }
+  });
+
   return selected_cards;
 }
 
@@ -101,11 +115,19 @@ socket.on('set_selection_status', (response) => {
 
 // update game state
 socket.on('set_state', (cards) => {
-  console.log("Received cards:", cards);
+  const container_self = get_field_container(NAME_SELF);
+  const container_opponent = get_field_container(NAME_OPPONENT);
+
+  container_self.innerHTML = "";
+  container_opponent.innerHTML = "";
 
   cards.forEach(card => {
-    let card_id = card;
-    set_card_value(card_id,card.value);
+    const button = document.createElement("button");
+    button.className = "textbox";
+    button.setAttribute("onclick", `select_card(${card.index}, "${card.owner}")`);
+    button.textContent = card.value;
+    const container = get_field_container(card.owner);
+    container.appendChild(button);
   });
 });
 
