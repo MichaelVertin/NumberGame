@@ -32,8 +32,8 @@ def check_selection(selected_ids):
 @socketio.on('send_move')
 def send_move(selected_ids):
     try:
-        GLOBAL_GAME.submit_turn(selected_ids)
-        response = update_state()
+        response = GLOBAL_GAME.submit_turn(selected_ids)
+        update_state()
         emit('set_selection_status', response)
     except Exception as e:
         emit('set_selection_status', {"status": "False", "message":str(e)})
