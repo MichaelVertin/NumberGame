@@ -3,10 +3,11 @@ import random
 
 class Card:
     def __init__(self, initial_value = None):
-        self.value = random.randint(10,100)
+        self.offense = random.randint(50,100)
+        self.defense = random.randint(75,150)
 
     def __str__(self):
-        return str(self.value)
+        return f"{self.offense} / {self.defense}"
 
 
 class NumberGame:
@@ -64,8 +65,8 @@ class NumberGame:
                 active_cards.append(card_id)
             else:
                 inactive_cards.append(card_id)
-        active_value = sum([self.get_card_obj(card).value for card in active_cards])
-        inactive_value = sum([self.get_card_obj(card).value for card in inactive_cards])
+        active_value = sum([self.get_card_obj(card).offense for card in active_cards])
+        inactive_value = sum([self.get_card_obj(card).defense for card in inactive_cards])
         if len(inactive_cards) != 1:
             raise ValueError("Select exactly one of the opponent's cards")
         if len(active_cards) == 0:
@@ -91,7 +92,8 @@ class NumberGame:
         # add a card to each player
         for player_name in self.__players:
             self.add_card(player_name)
-        
+            self.add_card(player_name)
+
         self.__turn_count += 1
 
         return {"status": "True", "message": "Turn Submitted Successfully"}
