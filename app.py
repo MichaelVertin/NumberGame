@@ -18,7 +18,9 @@ def index():
 
 @socketio.on('update_state')
 def update_state():
-    emit('set_state', GLOBAL_GAME.get_state())
+    state = GLOBAL_GAME.get_state()
+    active_player = GLOBAL_GAME.get_active_player()
+    emit('set_state', {"cards": state, "active_player": active_player})
 
 @socketio.on('check_selection')
 def check_selection(selected_ids):

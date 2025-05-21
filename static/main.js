@@ -86,7 +86,7 @@ function select_deck() {
 
 function check_selection() {
   const selected_cards = get_selections(); 
-  set_status_message("Verifying Selection...")
+  set_status_message("Verifying Selection...");
   socket.emit("check_selection", selected_cards);
 }
 
@@ -126,7 +126,8 @@ socket.on('set_selection_status', (response) => {
 });
 
 // update game state
-socket.on('set_state', (cards) => {
+socket.on('set_state', (data) => {
+  const cards = data.cards;
   const container_self = get_field_container(NAME_SELF);
   const container_opponent = get_field_container(NAME_OPPONENT);
 
@@ -141,11 +142,33 @@ socket.on('set_state', (cards) => {
     const container = get_field_container(card.owner);
     container.appendChild(button);
   });
+
+  set_turn(data.active_player);
 });
 
 function set_status_message(message) {
   const message_field = document.getElementById("status-message");
   message_field.innerText = message; 
 }
+
+function set_turn(player_name) {
+  const name_field_self = document.querySelector('.name-self');
+  const name_field_opponent = document.querySelector('.name-opponent');
+
+  let name_field_active = "";
+  let name_field_inactive = "";
+  if (player_name == NAME_SELF) {
+    name_field_active = name_field_self;
+    name_field_inactive= name_field_opponent;
+  }
+  else {
+    name_field_active = name_field_opponent;
+    name_field_inactive = name_field_self;
+  }
+
+  name_field_active.classList.add("active-player");
+  name_field_inactive.classList.remove("active-player");
+}
+
 
 
