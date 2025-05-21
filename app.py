@@ -18,31 +18,26 @@ def index():
 
 @socketio.on('update_state')
 def update_state():
-    cards = list()
-    [cards.append({"owner": "ALICE", "index": index, "value": "---"}) \
-        for index in range(10)]
-    [cards.append({"owner": "BOB", "index": index, "value": "---"}) \
-        for index in range(10)]
-    """
-    cards = [
-        {"owner": "ALICE", "index": 0, "value": "5 / 7"}, 
-        {"owner": "BOB", "index": 0, "value": "42 / 24"}, 
-        {"owner": "BOB", "index": 1, "value": "123 / 321"}, 
-    ]
-    """
-    # // emit('set_state', cards)
     emit('set_state', GLOBAL_GAME.get_state())
 
 @socketio.on('check_selection')
 def check_selection(selected_ids):
-    status = GLOBAL_GAME.check_turn(selected_ids)
-    emit('set_selection_status', status)
-    # emit('set_selection_status', {"status": "True", "message": "testing..."});
+    try:
+        status = GLOBAL_GAME.check_turn(selected_ids)
+        emit('set_selection_status', status)
+    except Exception as e:
+        emit('set_selection_status', {"status": "False", "message":str(e)})
+
 
 @socketio.on('send_move')
 def send_move(selected_ids):
-    GLOBAL_GAME.submit_turn(selected_ids)
-    update_state()
+    try:
+        GLOBAL_GAME.submit_turn(selected_ids)
+        response = update_state()
+        emit('set_selection_status', response)
+    except Exception as e:
+        emit('set_selection_status', {"status": "False", "message":str(e)})
+
 
 if __name__ == '__main__':
     print("Running on port 5000")

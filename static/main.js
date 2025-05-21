@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const selections = get_selections();
     socket.emit("send_move", selections);
   };
+
+  socket.emit("update_state");
 });
 
 // card access /////////////////////////////////////////////////////////
