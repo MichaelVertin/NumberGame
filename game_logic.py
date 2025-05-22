@@ -1,12 +1,20 @@
 import random
 
 
+CARDS_PER_TURN = 1
+OFFENSE_MIN = 75
+OFFENSE_MAX = 125
+DEFENSE_MIN = 200
+DEFENSE_MAX = 400
+
+
 class Card:
     def __init__(self, initial_value = None):
-        self.value = random.randint(10,100)
+        self.offense = random.randint(OFFENSE_MIN,OFFENSE_MAX)
+        self.defense = random.randint(DEFENSE_MIN,DEFENSE_MAX)
 
     def __str__(self):
-        return str(self.value)
+        return f"{self.offense} / {self.defense}"
 
 
 class NumberGame:
@@ -57,15 +65,25 @@ class NumberGame:
     def check_turn(self, selected_cards):
         active_cards = list()
         inactive_cards = list()
+        deck_selected = False
         active_player = self.__players[self.__turn_count % len(self.__players)]
         for card_id in selected_cards:
+            if card_id.get("type") == "deck":
+                deck_selected = True
+                continue
+            
             card_obj = self.get_card_obj(card_id)
             if card_id["owner"] == active_player:
                 active_cards.append(card_id)
             else:
                 inactive_cards.append(card_id)
-        active_value = sum([self.get_card_obj(card).value for card in active_cards])
-        inactive_value = sum([self.get_card_obj(card).value for card in inactive_cards])
+        if deck_selected:
+            if active_cards or inactive_cards:
+                raise ValueError("To draw cards, only select the deck")
+            return {"status": "True", "message": "Draw Two Cards Selected"}
+
+        active_value = sum([self.get_card_obj(card).offense for card in active_cards])
+        inactive_value = sum([self.get_card_obj(card).defense for card in inactive_cards])
         if len(inactive_cards) != 1:
             raise ValueError("Select exactly one of the opponent's cards")
         if len(active_cards) == 0:
@@ -80,18 +98,23 @@ class NumberGame:
 
     def submit_turn(self, selected_cards):
         self.check_turn(selected_cards)
-
-        # remove all selected cards
-        for card_id in selected_cards:
-            self.__cards[card_id["owner"]][card_id["index"]] = None
-        for player_name in self.__players:
-            self.__cards[player_name] = [card for card in self.__cards[player_name] \
+        if len(selected_cards) == 1:
+            active_player = self.__players[self.__turn_count % len(self.__players)]
+            for i in range(2):
+                self.add_card(active_player)
+        else:
+            # remove all selected cards
+            for card_id in selected_cards:
+                self.__cards[card_id["owner"]][card_id["index"]] = None
+            for player_name in self.__players:
+                self.__cards[player_name] = [card for card in self.__cards[player_name] \
                                               if card != None]
         
         # add a card to each player
         for player_name in self.__players:
-            self.add_card(player_name)
-        
+            for card_count in range(CARDS_PER_TURN):
+                self.add_card(player_name)
+
         self.__turn_count += 1
 
         return {"status": "True", "message": "Turn Submitted Successfully"}
