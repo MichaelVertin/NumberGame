@@ -1,5 +1,5 @@
 import random
-
+from game_errors import *
 
 CARDS_PER_TURN = 1
 OFFENSE_MIN = 5
@@ -20,17 +20,14 @@ class Card:
 
 
 class NumberGame:
-    def __init__(self, player_name_one, player_name_two, max_cards = 10):
-        self.__player_one_name = player_name_one 
-        self.__player_two_name = player_name_two 
+    def __init__(self, player_one_name, player_two_name, max_cards = 10):
         self.__cards = dict()
-        self.__cards[player_name_one] = list()
-        self.__cards[player_name_two] = list()
-        self.__players = [self.__player_one_name,self.__player_two_name]
+        self.__cards[player_one_name] = list()
+        self.__cards[player_two_name] = list()
+        self.__players = [player_one_name,player_two_name]
         self.__turn_count = 0
         self.__max_cards = max_cards
-        self.__scores = {self.__player_one_name: 0, 
-                         self.__player_two_name: 0}
+        self.__scores = {player_name:0 for player_name in self.__players}
 
         # start with three cards
         for player_name in self.__players:
@@ -42,11 +39,11 @@ class NumberGame:
         try:
             cards = self.__cards[card_id["owner"]]
         except:
-            raise ValueError(f"No player named {card_id['owner']}")
+            raise PlayerNotExists(card_id["owner"])
         try:
             card_obj = cards[card_id["index"]]
         except:
-            raise ValueError(f"Selected card does not exist")
+            raise CardNotExists(card_id)
         return card_obj 
 
     # adds a new card to the owner's collection
@@ -57,7 +54,7 @@ class NumberGame:
 
     def get_state(self):
         card_states = list()
-        for player_name in [self.__player_one_name,self.__player_two_name]:
+        for player_name in self.__players: 
             for card_index, card_obj in enumerate(self.__cards[player_name]):
                 card_state = dict()
                 card_state["owner"] = player_name
@@ -83,17 +80,17 @@ class NumberGame:
                 inactive_cards.append(card_id)
         if deck_selected:
             if active_cards or inactive_cards:
-                raise ValueError("To draw cards, only select the deck")
+                raise SelectionError("To draw cards, only select the deck")
             return {"status": "True", "message": "Draw Two Cards Selected"}
 
         active_value = sum([self.get_card_obj(card).offense for card in active_cards])
         inactive_value = sum([self.get_card_obj(card).defense for card in inactive_cards])
         if len(inactive_cards) != 1:
-            raise ValueError("Select exactly one of the opponent's cards")
+            raise SelectionError("Select exactly one of the opponent's cards")
         if len(active_cards) == 0:
-            raise ValueError("Select at least one of your cards")
+            raise SelectionError("Select at least one of your cards")
         if active_value < inactive_value:
-            raise ValueError("Your value is not large enough")
+            raise SelectionError("Your value is not large enough")
         return {"status": "True", "message": "Selections are Valid"}
 
 
@@ -127,15 +124,16 @@ class NumberGame:
                 self.add_card(player_name)
 
         self.__turn_count += 1
-
         return {"status": "True", "message": "Turn Submitted Successfully"}
 
     def get_active_player(self):
         active_player = self.__players[self.__turn_count % len(self.__players)]
         return active_player
 
-
     def get_score(self):
         return self.__scores
+
+
+
 
 
