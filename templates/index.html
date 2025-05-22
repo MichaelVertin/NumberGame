@@ -61,6 +61,10 @@
     height: 100%;
   }
 
+  .active-player {
+    background-color: green;
+  }
+
   button[data-selected="true"] {
     background-color: #ffeeee;
     border: 2px solid red;
@@ -89,10 +93,12 @@
        </div>
      </div>
      <div class="play-field-total">
-       <div class="play-field play-field-self">
-       </div>
-       <div></div> 
        <div class="play-field play-field-opponent">
+         <!--opponent's cards here-->
+       </div>
+       <div></div>
+       <div class="play-field play-field-self">
+         <!--self's cards here-->
        </div>
      </div>
     </div>
