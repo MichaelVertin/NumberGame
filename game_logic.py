@@ -6,15 +6,17 @@ OFFENSE_MIN = 5
 OFFENSE_MAX = 10
 DEFENSE_MIN = 15
 DEFENSE_MAX = 30
-
+VALUE_MIN = 3
+VALUE_MAX = 7
 
 class Card:
     def __init__(self, initial_value = None):
         self.offense = random.randint(OFFENSE_MIN,OFFENSE_MAX)
         self.defense = random.randint(DEFENSE_MIN,DEFENSE_MAX)
+        self.value = random.randint(VALUE_MIN,VALUE_MAX)
 
     def __str__(self):
-        return f"{self.offense} / {self.defense}"
+        return f"{self.offense} / {self.defense}<br>{self.value}"
 
 
 class NumberGame:
@@ -27,6 +29,8 @@ class NumberGame:
         self.__players = [self.__player_one_name,self.__player_two_name]
         self.__turn_count = 0
         self.__max_cards = max_cards
+        self.__scores = {self.__player_one_name: 0, 
+                         self.__player_two_name: 0}
 
         # start with three cards
         for player_name in self.__players:
@@ -103,6 +107,13 @@ class NumberGame:
             for i in range(2):
                 self.add_card(active_player)
         else:
+            # add to score
+            active_player = self.get_active_player()
+            active_cards = [card for card in selected_cards if card["owner"]==active_player]
+            active_cards = [self.get_card_obj(card_id) for card_id in active_cards]
+            for card_obj in active_cards:
+                self.__scores[active_player] += card_obj.value
+
             # remove all selected cards
             for card_id in selected_cards:
                 self.__cards[card_id["owner"]][card_id["index"]] = None
@@ -124,6 +135,7 @@ class NumberGame:
         return active_player
 
 
-
+    def get_score(self):
+        return self.__scores
 
 

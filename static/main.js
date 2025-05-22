@@ -138,17 +138,18 @@ socket.on('set_state', (data) => {
     const button = document.createElement("button");
     button.className = "textbox";
     button.setAttribute("onclick", `select_card(${card.index}, "${card.owner}")`);
-    button.textContent = card.value;
+    button.innerHTML = card.value;
     const container = get_field_container(card.owner);
     container.appendChild(button);
   });
 
   set_turn(data.active_player);
+  set_score(data.score);
 });
 
 function set_status_message(message) {
   const message_field = document.getElementById("status-message");
-  message_field.innerText = message; 
+  message_field.innerHTML = message; 
 }
 
 function set_turn(player_name) {
@@ -170,5 +171,11 @@ function set_turn(player_name) {
   name_field_inactive.classList.remove("active-player");
 }
 
+function set_score(score) {
+  const name_field_self = document.querySelector('.name-self');
+  const name_field_opponent = document.querySelector('.name-opponent');
 
+  name_field_self.innerText = NAME_SELF + ": " + score[NAME_SELF];
+  name_field_opponent.innerText = NAME_OPPONENT + ": " + score[NAME_OPPONENT];
+}
 
