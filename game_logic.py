@@ -2,10 +2,10 @@ import random
 
 
 CARDS_PER_TURN = 1
-OFFENSE_MIN = 75
-OFFENSE_MAX = 125
-DEFENSE_MIN = 200
-DEFENSE_MAX = 400
+OFFENSE_MIN = 5
+OFFENSE_MAX = 10
+DEFENSE_MIN = 15
+DEFENSE_MAX = 30
 
 
 class Card:
@@ -66,7 +66,7 @@ class NumberGame:
         active_cards = list()
         inactive_cards = list()
         deck_selected = False
-        active_player = self.__players[self.__turn_count % len(self.__players)]
+        active_player = self.get_active_player()
         for card_id in selected_cards:
             if card_id.get("type") == "deck":
                 deck_selected = True
@@ -99,7 +99,7 @@ class NumberGame:
     def submit_turn(self, selected_cards):
         self.check_turn(selected_cards)
         if len(selected_cards) == 1:
-            active_player = self.__players[self.__turn_count % len(self.__players)]
+            active_player = self.get_active_player()
             for i in range(2):
                 self.add_card(active_player)
         else:
@@ -118,7 +118,11 @@ class NumberGame:
         self.__turn_count += 1
 
         return {"status": "True", "message": "Turn Submitted Successfully"}
- 
+
+    def get_active_player(self):
+        active_player = self.__players[self.__turn_count % len(self.__players)]
+        return active_player
+
 
 
 
