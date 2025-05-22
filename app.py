@@ -7,7 +7,7 @@ from game_logic import NumberGame
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
+app.config['SECRET_KEY'] = 'my_secret'
 socketio = SocketIO(app, async_mode='eventlet')
 
 GLOBAL_GAME = NumberGame("ALICE", "BOB")
@@ -29,7 +29,7 @@ def check_selection(selected_ids):
     try:
         status = GLOBAL_GAME.check_turn(selected_ids)
         emit('set_selection_status', status)
-    except Exception as e:
+    except SelectionError as e:
         emit('set_selection_status', {"status": "False", "message":str(e)})
 
 
@@ -39,7 +39,7 @@ def send_move(selected_ids):
         response = GLOBAL_GAME.submit_turn(selected_ids)
         update_state()
         emit('set_selection_status', response)
-    except Exception as e:
+    except SelectionError as e:
         emit('set_selection_status', {"status": "False", "message":str(e)})
 
 
