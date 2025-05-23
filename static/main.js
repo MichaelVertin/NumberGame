@@ -91,13 +91,24 @@ function check_selection() {
 }
 
 function get_selections() {
-  const selected_cards = [];
+  let deck_selected = false;
+  let card_selected = false;
 
+  const deck_obj = document.getElementById("deck");
+  if (deck_obj.getAttribute("data-selected") == "true") {
+    deck_selected = true;
+  }
+
+  const cards = {
+	          [NAME_SELF]: [], 
+	          [NAME_OPPONENT]: []
+                };
   get_cards(NAME_SELF).forEach((card_obj, index) => {
     const isSelected = card_obj.dataset.selected == "true";
     if(isSelected) {
       const card_id = get_card_id(NAME_SELF, index);
-      selected_cards.push(card_id);
+      cards[NAME_SELF].push(card_id);
+      card_selected = true;
     }
   });
 
@@ -105,15 +116,21 @@ function get_selections() {
     const isSelected = card_obj.dataset.selected == "true";
     if(isSelected) {
       const card_id = get_card_id(NAME_OPPONENT, index);
-      selected_cards.push(card_id);
+      cards[NAME_OPPONENT].push(card_id);
+      card_selected = true;
     }
   });
-
-  const deck_obj = document.getElementById("deck");
-  if (deck_obj.getAttribute("data-selected") == "true") {
-    selected_cards.push({"type": "deck"});
+  
+  if (deck_selected && card_selected) {
+    set_status_message("To draw, only select deck");
+    return {"type": "none"};
   }
-  return selected_cards;
+  if (deck_selected) {
+    return {"type": "draw"}
+  }
+
+  return {"type": "attack", 
+	  "cards": cards}
 }
 
 socket.on('set_selection_status', (response) => {
@@ -178,4 +195,8 @@ function set_score(score) {
   name_field_self.innerText = NAME_SELF + ": " + score[NAME_SELF];
   name_field_opponent.innerText = NAME_OPPONENT + ": " + score[NAME_OPPONENT];
 }
+
+
+
+
 
