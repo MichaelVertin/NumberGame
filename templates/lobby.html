@@ -7,10 +7,149 @@
 </head>
 <body>
   <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  *, *::before, *::after {
+    box-sizing: inherit;
+  }
+
+  .window {
+    display: grid;
+    grid-template-rows: 20% 80%;
+    height: 100vh;
+  }
+
+  .header {
+    display: grid;
+    grid-template-columns: 20% 20% 60%;
+    width: 100%;
+  }
+
+  .name-field {
+    text-align: right;
+  }
+
+  .content {
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    width: 99%;
+  }
+
+  .filter-container {
+    display: grid;
+    grid-template-rows: 15% 15% 50% 20%;
+    height: 100%;
+  }
+
+  .label {
+
+  }
+
+  .filter {
+
+  }
+
+  .search-results {
+    
+  }
+
+  .new-game {
+    display: grid;
+    grid-template-rows: 20% 60% 20%;
+    height: 100%;
+  }
+
+  .new-game-data {
+    display: grid;
+    grid-template-rows: 20% 20% 20%;
+    height: 100%;
+  }
 
 
   </style>
 
+  <div class="window">
+    <div class="header">
+      <div class="title">
+        <H1>Lobby</H1>
+      </div>
+      <div></div>
+      <div class="name-field" id="name-field">
+        Your Name Here
+      </div>
+    </div>
+    <div class="content">
+      <div class="players filter-container">
+        <div class="label">
+          <H2>Players</H2>
+        </div>
+        <div class="filter">
+          <input type="text" id="filter-player">
+        </div>
+        <div class="search-results">
+          Player 1<br>
+          Player 2
+        </div>
+      </div>
+ 
+
+
+     <div class="existing-game filter-container">
+        <div class="label">
+          <H2>Existing Game</H2>
+        </div>
+        <div class="filter"> 
+          <input type="text" id="filter-existing-game">
+        </div>
+        <div class="search-results">
+          Game 1<br>
+          Game 2
+        </div>
+        <div class="submit">
+          <button class="submit" id="submit-button-existing-game" 
+              onclick="submit_existing_game()">
+            Submit
+          </button>
+        </div>
+      </div>
+
+
+
+      <div class="new-game">
+        <div class="label">
+          <H2>New Game</H2>
+        </div>
+        <div class="new-game-data">
+          <div class="your-name">
+            Your Name:
+            <input type="text" id="your-name">
+          </div>
+          <div class="opponent-name">
+            Opponent's Name:
+            <input type="text" id="opponent-name">
+          </div>
+          <div class="game-name">
+            Game's Name:
+            <input type="text" id="new-game-name">
+          </div>
+        </div>
+        <div class="submit">
+          <button class="submit" id="submit-button-new-game"
+              onclick="submit_new_game()">
+            Submit
+          </button>
+        </div>
+      </div>
+    
+    </div>
+  </div>
+
+<!--
   <div>
     self-name
     <input type="text" id="self-name">
@@ -31,6 +170,7 @@
       Access Game
     </button>
   </div>
+-->
 </body>
 </html>
 
