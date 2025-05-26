@@ -1,6 +1,6 @@
-const NAME_SELF = "BOB";
-const NAME_OPPONENT = "ALICE";
 const socket = io();
+let NAME_TOP = "BOB";
+let NAME_BOTTOM = "ALICE";
 
 // button initialization after DOM loaded
 document.addEventListener("DOMContentLoaded", () => {
@@ -26,10 +26,10 @@ function get_card_obj(card_id) {
 
 function get_field_container(owner_name) {
   let field_name = "";
-  if(owner_name == NAME_SELF) {
+  if(owner_name == NAME_BOTTOM) {
     field_name = ".play-field-self";
   }
-  else if (owner_name == NAME_OPPONENT) {
+  else if (owner_name == NAME_TOP) {
     field_name = ".play-field-opponent";
   }
   else {
@@ -58,9 +58,9 @@ function set_card_value(card_id,value) {
 // card selection ///////////////////////////////////////////////////////
 function get_owner(player_id) {
   if(player_id==0) {
-    return NAME_OPPONENT;
+    return NAME_TOP;
   }
-  return NAME_SELF;
+  return NAME_BOTTOM;
 }
 
 
@@ -103,26 +103,27 @@ function get_selections() {
   }
 
   const cards = {
-	          [NAME_SELF]: [], 
-	          [NAME_OPPONENT]: []
+	          [NAME_BOTTOM]: [], 
+	          [NAME_TOP]: []
                 };
-  get_cards(NAME_SELF).forEach((card_obj, index) => {
+  get_cards(NAME_BOTTOM).forEach((card_obj, index) => {
     const isSelected = card_obj.dataset.selected == "true";
     if(isSelected) {
-      const card_id = get_card_id(NAME_SELF, index);
-      cards[NAME_SELF].push(card_id);
+      const card_id = get_card_id(NAME_BOTTOM, index);
+      cards[NAME_BOTTOM].push(card_id);
       card_selected = true;
     }
   });
 
-  get_cards(NAME_OPPONENT).forEach((card_obj, index) => {
+  get_cards(NAME_TOP).forEach((card_obj, index) => {
     const isSelected = card_obj.dataset.selected == "true";
     if(isSelected) {
-      const card_id = get_card_id(NAME_OPPONENT, index);
-      cards[NAME_OPPONENT].push(card_id);
+      const card_id = get_card_id(NAME_TOP, index);
+      cards[NAME_TOP].push(card_id);
       card_selected = true;
     }
   });
+  // TODO: replace with one loop
   
   if (deck_selected && card_selected) {
     set_status_message("To draw, only select deck");
@@ -148,9 +149,10 @@ socket.on('set_selection_status', (response) => {
 // update game state
 socket.on('set_state', (data) => {
   const cards = data.cards;
-  const container_self = get_field_container(NAME_SELF);
-  const container_opponent = get_field_container(NAME_OPPONENT);
 
+  // clear field containers
+  const container_self = get_field_container(NAME_TOP);
+  const container_opponent = get_field_container(NAME_BOTTOM);
   container_self.innerHTML = "";
   container_opponent.innerHTML = "";
 
@@ -178,13 +180,16 @@ function set_turn(player_name) {
 
   let name_field_active = "";
   let name_field_inactive = "";
-  if (player_name == NAME_SELF) {
+  if (player_name == NAME_BOTTOM) {
     name_field_active = name_field_self;
     name_field_inactive= name_field_opponent;
   }
-  else {
+  else if (player_name == NAME_TOP) {
     name_field_active = name_field_opponent;
     name_field_inactive = name_field_self;
+  }
+  else {
+    console.log_error("Player Name Not Recognized");
   }
 
   name_field_active.classList.add("active-player");
@@ -195,9 +200,19 @@ function set_score(score) {
   const name_field_self = document.querySelector('.name-self');
   const name_field_opponent = document.querySelector('.name-opponent');
 
-  name_field_self.innerText = NAME_SELF + ": " + score[NAME_SELF];
-  name_field_opponent.innerText = NAME_OPPONENT + ": " + score[NAME_OPPONENT];
+  name_field_self.innerText = NAME_BOTTOM + ": " + score[NAME_BOTTOM];
+  name_field_opponent.innerText = NAME_TOP + ": " + score[NAME_TOP];
 }
+
+
+socket.on('set_names', (data) => {
+  // identify top and bottom players
+  // if self is in players, put self at top
+  // NOTE: This assumes exactly 2 players are provided
+  NAME_TOP = data.other_names[0];
+  NAME_BOTTOM = data.your_name;
+});
+
 
 
 

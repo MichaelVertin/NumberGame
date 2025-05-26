@@ -11,6 +11,7 @@ class Player:
         self.sid = sid
 
     def join_game(self, game_room):
+        print(f"{self.name} joining game")
         self.game_room = game_room
         emit("load_game", to=self.sid)
 
@@ -41,12 +42,24 @@ class Player:
         game_room = self.get_game_room()
         if game_room:
             game_room.reconnect_player(self)
+            self.set_names()
+
+    def set_names(self):
+        players = self.get_game_room().get_players()
+        your_name = self.name
+        if your_name not in players:
+            your_name = players[0]
+
+        data = dict()
+        data["your_name"] = your_name
+        data["other_names"] = [name for name in players if name != your_name]
+        emit('set_names', data, to=self.sid)
+
 
 class GameRoom:
     def __init__(self, game, name):
         self.__game = game
         self.__room_id = name
-        self.__players = dict()
 
     def do_turn(self, player, data):
         if self.__game.get_active_player() != player.name:
@@ -67,42 +80,26 @@ class GameRoom:
         if player.sid:
             join_room(self.__room_id, sid=player.sid)
             # TODO: This is never called
-        self.__players[player.name] = player
 
     def reconnect_player(self, player):
         if player.sid:
             join_room(self.__room_id, sid=player.sid)
-        self.__players[player.name] = player
 
     def remove_player(self, player):
         leave_room(self.__room_id, sid=player.sid)
-        del self.__players[player.name]
 
     def update_players(self):
         game = self.__game
         state = game.get_state()
-        active_player = game.get_active_player()
-        score = game.get_score()
-        state = {"cards": state, 
-                 "active_player": active_player, 
-                 "score": score}
-        #for player_name, player in self.__players.items():
-        #    emit('set_state', state, to=player.sid)
         emit('set_state', state, room=self.__room_id)
-        # TODO: Error: this does not send the state to the client
 
     def update_player(self, player):
         game = self.__game
         state = game.get_state()
-        score = game.get_score()
-        active_player = game.get_active_player()
-        state = {"cards": state, 
-                 "active_player": active_player, 
-                 "score": score}
         emit('set_state', state, to=player.sid)
 
-
-
+    def get_players(self):
+        return [self.__game.get_active_player(), self.__game.get_inactive_player()]
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my_secret'
@@ -167,7 +164,7 @@ def create_game(data):
     game_name = data["game_name"]
 
     if game_name in GAME_ROOMS.keys():
-        raise ValueError("Game {game_name} already exists")
+        raise ValueError(f"Game {game_name} already exists")
     game = NumberGame(player.name, opponent_name)
     GAME_ROOMS[game_name] = GameRoom(game, game_name)
 
