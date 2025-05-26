@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hello SocketIO</title>
+  <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+  <script src="{{ url_for('static', filename='lobby.js') }}"></script>
+</head>
+<body>
+  <style>
+
+
+  </style>
+
+  <div>
+    self-name
+    <input type="text" id="self-name">
+    <button class="submit" id="submit-button" onclick="create_player()">
+      Create Player
+    </button>
+  </div>
+  <div>
+    opponent-name
+    <input type="text" id="opponent-name">
+    <br>
+    game-name
+    <input type="text" id="game-name">
+    <button class="submit" id="submit-button" onclick="create_game()">
+      Create Game
+    </button>
+    <button class="submit" id="submit-button2" onclick="access_game()">
+      Access Game
+    </button>
+  </div>
+</body>
+</html>
+
+
+
+

@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     set_status_message("Sending Move...");
     socket.emit("send_move", selections);
   };
-
+  socket.emit("reconnect");
   socket.emit("update_state");
 });
 
@@ -29,8 +29,11 @@ function get_field_container(owner_name) {
   if(owner_name == NAME_SELF) {
     field_name = ".play-field-self";
   }
-  else {
+  else if (owner_name == NAME_OPPONENT) {
     field_name = ".play-field-opponent";
+  }
+  else {
+    console.error("Opponent Not Recognized");
   }
   const container = document.querySelector(field_name);
   return container;
