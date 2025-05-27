@@ -109,7 +109,7 @@ class NumberGame:
         self.__cards[owner].append(Card())
         return True
 
-    def get_state(self):
+    def get_cards(self):
         card_states = list()
         for player_name in self.__players: 
             for card_index, card_obj in enumerate(self.__cards[player_name]):
@@ -118,7 +118,16 @@ class NumberGame:
                 card_state["index"] = card_index
                 card_state["value"] = str(card_obj)
                 card_states.append(card_state)
-        return card_states
+        return card_states 
+
+    def get_state(self):
+        cards = self.get_cards()
+        score = self.get_score()
+        active_player = self.get_active_player()
+        state = {"cards": cards,
+                 "active_player": active_player,
+                 "score": score}
+        return state
 
     def pass_turn(self):
         # add a card to each player
