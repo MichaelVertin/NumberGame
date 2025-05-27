@@ -191,6 +191,32 @@ def update_state():
     player = get_player()
     player.update_state()
 
+@socketio.on('get_players')
+def get_players():
+    players = PLAYERS
+    player_data = dict()
+    player_self = get_player()
+    for player_name, player in players.items():
+        player_data[player_name] = {}
+        player_data[player_name]["is_you"] = str(player_self.name == player_name)
+    
+    emit("set_players", player_data, to=player_self.sid)
+
+@socketio.on('get_games')
+def get_games():
+    rooms = GAME_ROOMS
+    your_player = get_player()
+    game_data = dict()
+    for game_name, game_room in rooms.items():
+        player_names = game_room.get_players()
+        your_game = your_player.name in player_names
+        game_item = {"player1": player_names[0], 
+                     "player2": player_names[1], 
+                     "your_game": your_game}
+        game_data[game_name] = game_item
+
+    emit("set_games", game_data, to=your_player.sid)
+
 
 if __name__ == '__main__':
     print("Running on port 5000")
