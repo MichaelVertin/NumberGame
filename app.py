@@ -11,7 +11,6 @@ class Player:
         self.sid = sid
 
     def join_game(self, game_room):
-        print(f"{self.name} joining game")
         self.game_room = game_room
         emit("load_game", to=self.sid)
 
@@ -36,7 +35,7 @@ class Player:
             emit('set_selection_status', status)
         except SelectionError as e:
             emit('set_selection_status', {"status": "False", "message":str(e)}, to=self.sid)
-         
+             
     def reconnect(self, sid):
         self.sid = sid
         game_room = self.get_game_room()
@@ -76,7 +75,6 @@ class GameRoom:
         return status
 
     def add_player(self, player):
-        print("Adding player")
         if player.sid:
             join_room(self.__room_id, sid=player.sid)
             # TODO: This is never called
@@ -107,6 +105,8 @@ socketio = SocketIO(app, async_mode='eventlet')
 
 GAME_ROOMS = dict()
 PLAYERS = dict()
+PLAYER_SESSION_DATA = dict()
+
 
 def get_turn_obj(data, game):
     if data["type"] == "draw":
@@ -139,27 +139,30 @@ def game():
 
 @app.route("/set_username", methods=["POST"])
 def set_username():
-    data = request.get_json()
     sid = get_sid()
+    data = request.get_json()
     username = data["username"]
-    session["username"] = username
+    # session["username"] = username
+    session_id = data["session_id"]
+    PLAYER_SESSION_DATA[session_id] = username
     PLAYERS[username] = Player(username, sid)
     return jsonify({"success": True})
 
-def get_player():
-    username = session["username"]
+def get_player(session_id):
+    username = PLAYER_SESSION_DATA[session_id]
+    # username = session["username"]
     return PLAYERS[username]
 
 @socketio.on('reconnect')
-def reconnect():
+def reconnect(data):
     sid = get_sid()
-    player = get_player()
+    player = get_player(data["session_id"])
     player.reconnect(sid)
 
 # TODO: incomplete
 @socketio.on('create_game')
 def create_game(data):
-    player = get_player()
+    player = get_player(data["session_id"])
     opponent_name = data["opponent_name"]
     game_name = data["game_name"]
 
@@ -171,31 +174,31 @@ def create_game(data):
 # TODO: incomplete
 @socketio.on('join_game')
 def join_game(data):
-    player = get_player()
+    player = get_player(data["session_id"])
     game_name = data["game_name"]
     game_room = GAME_ROOMS[game_name]
     player.join_game(game_room)
 
 @socketio.on('check_selection')
 def check_selection(data):
-    player = get_player()
+    player = get_player(data["session_id"])
     player.check_turn(data)
 
 @socketio.on('send_move')
 def send_move(data):
-    player = get_player()
+    player = get_player(data["session_id"])
     player.do_turn(data)
 
 @socketio.on('update_state')
-def update_state():
-    player = get_player()
+def update_state(data):
+    player = get_player(data["session_id"])
     player.update_state()
 
 @socketio.on('get_players')
-def get_players():
+def get_players(data):
     players = PLAYERS
     player_data = dict()
-    player_self = get_player()
+    player_self = get_player(data["session_id"])
     for player_name, player in players.items():
         player_data[player_name] = {}
         player_data[player_name]["is_you"] = str(player_self.name == player_name)
@@ -203,9 +206,9 @@ def get_players():
     emit("set_players", player_data, to=player_self.sid)
 
 @socketio.on('get_games')
-def get_games():
+def get_games(data):
     rooms = GAME_ROOMS
-    your_player = get_player()
+    your_player = get_player(data["session_id"])
     game_data = dict()
     for game_name, game_room in rooms.items():
         player_names = game_room.get_players()

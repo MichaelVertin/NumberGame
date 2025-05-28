@@ -2,16 +2,39 @@ const socket = io();
 let NAME_TOP = "BOB";
 let NAME_BOTTOM = "ALICE";
 
+// https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
+function uuidv4() {
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+    (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+  );
+}
+
+/*
+if (!localStorage.getItem("customSessionId")) {
+  const newId = uuidv4();  // Or use a custom UUID function
+  localStorage.setItem("customSessionId", newId);
+}
+const SESSION_ID = localStorage.getItem("customSessionId");
+console.log(SESSION_ID);
+*/
+
+if (!sessionStorage.getItem("customSessionId")) {
+  const newId = uuidv4();
+  sessionStorage.setItem("customSessionId", newId);
+}
+const SESSION_ID = sessionStorage.getItem("customSessionId");
+
 // button initialization after DOM loaded
 document.addEventListener("DOMContentLoaded", () => {
   // set up sendMove button
   document.getElementById("sendMove").onclick = function () {
     const selections = get_selections();
     set_status_message("Sending Move...");
+    selections["session_id"] = SESSION_ID;
     socket.emit("send_move", selections);
   };
-  socket.emit("reconnect");
-  socket.emit("update_state");
+  socket.emit("reconnect", {session_id: SESSION_ID});
+  socket.emit("update_state", {session_id: SESSION_ID});
 });
 
 // card access /////////////////////////////////////////////////////////
@@ -90,6 +113,7 @@ function select_deck() {
 function check_selection() {
   const selected_cards = get_selections(); 
   set_status_message("Verifying Selection...");
+  selected_cards["session_id"] = SESSION_ID;
   socket.emit("check_selection", selected_cards);
 }
 

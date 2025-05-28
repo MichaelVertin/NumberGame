@@ -53,6 +53,7 @@ class Turn_Attack(Turn):
         
         self.active_value = sum([card.offense for card in self.active_cards])
         self.inactive_value = sum([card.defense for card in self.inactive_cards])
+        self.score = sum([card.value for card in self.inactive_cards])
 
     def execute(self):
         active_player = self.game.get_active_player()
