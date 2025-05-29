@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   create_player(USERNAME);
 
   // TODO? Wait for player to be created correctly
+  socket.emit("reconnect", {session_id: SESSION_ID})
   set_games();
   set_players();
 });
