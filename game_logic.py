@@ -62,7 +62,7 @@ class Turn_Attack(Turn):
         self.validate()
         self.game.remove_cards(active_player, self.active_cards)
         self.game.remove_cards(inactive_player, self.inactive_cards)
-        self.game.add_points(active_player, self.inactive_value)
+        self.game.add_points(active_player, self.score)
 
         self.game.pass_turn()
         return {"status": "True", "message": "Successfully Executed Attack"}
