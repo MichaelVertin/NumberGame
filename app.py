@@ -35,10 +35,10 @@ class Session:
         return self.player
 
     def emit(self, method_name, data = None):
-        if data:
-            emit(method_name, data, to=self.sid)
+        if data != None:
+            socketio.emit(method_name, data, to=self.sid)
         else:
-            emit(method_name, to=self.sid)
+            socketio.emit(method_name, to=self.sid)
 
     # NOTE: Only works when called from socketio.on
     def connect(self):
@@ -107,6 +107,64 @@ class Player:
                }
         self.get_session().emit("set_names", data)
 
+    def emit(self, method_name, data = None):
+        session = self.get_session()
+        session.emit(method_name, data)
+
+class Lobby:
+    def __init__(self):
+        self.__players = list()
+
+    def add_player(self, player):
+        self.__players.append(player)
+    
+    def remove_player(self, player):
+        self.__players.remove(player)
+
+    def get_player_data(self):
+        return PLAYERS
+
+    def get_game_data(self):
+        game_data = dict()
+        for game_name, game_room in GAME_ROOMS.items():
+            player_names = game_room.get_players()
+            game_data[game_name] = {
+                    "player1": player_names[0], 
+                    "player2": player_names[1]
+            }
+        return game_data
+
+    def get_player_data(self):
+        player_data = dict()
+        for player_name, player in PLAYERS.items():
+            player_data[player_name] = {}
+
+        return player_data
+
+    def set_game_data(self, player = None):
+        if player:
+            players = [player]
+        else:
+            players = self.__players
+
+        game_data = self.get_game_data()
+        for player in players:
+            player.emit("set_games", game_data)
+
+    def set_player_data(self, player = None):
+        if player:
+            players = [player]
+        else:
+            players = self.__players
+
+        player_data = self.get_player_data()
+        for player in players:
+            player.emit("set_players", player_data)
+
+
+
+
+
 class GameRoom:
     def __init__(self, game, name):
         self.__game = game
@@ -149,6 +207,9 @@ class GameRoom:
         return state
 
 
+# lobby
+LOBBY = Lobby()
+
 # session access
 SESSIONS = dict()
 def create_session(data):
@@ -178,6 +239,8 @@ def create_player(data):
     if player_name in PLAYERS:
         raise SelectionError("Player Already Exists")
     PLAYERS[player_name] = Player(player_name)
+    LOBBY.add_player(PLAYERS[player_name])
+    LOBBY.set_player_data()
 
 def get_player(data):
     session = get_session(data)
@@ -202,14 +265,14 @@ def create_game(data):
         raise SelectionError("Game Already Exists")
     game = NumberGame(player.name, opponent_name)
     GAME_ROOMS[game_name] = GameRoom(game, game_name)
+    LOBBY.set_game_data()
 
 def set_game(data):
     player = get_player(data)
     game_name = data["game_name"]
     game_room = GAME_ROOMS[game_name]
     player.join_game_room(game_room)
-
-
+    LOBBY.remove_player(player)
 
 @app.route('/')
 def index():
@@ -270,30 +333,18 @@ def on_game_load(data):
 # TODO: 
 @socketio.on('get_players')
 def get_players_server(data):
-    players = PLAYERS
-    player_data = dict()
-    player_self = get_player(data)
-    for player_name, player in players.items():
-        player_data[player_name] = {}
-        player_data[player_name]["is_you"] = str(player_self.name == player_name)
+    lobby = LOBBY
+    player = get_player(data)
 
-    emit("set_players", player_data)
+    lobby.set_player_data(player)
 
 # TODO: 
 @socketio.on('get_games')
 def get_games_server(data):
-    rooms = GAME_ROOMS
-    your_player = get_player(data)
-    game_data = dict()
-    for game_name, game_room in rooms.items():
-        player_names = game_room.get_players()
-        your_game = your_player.name in player_names
-        game_item = {"player1": player_names[0],
-                     "player2": player_names[1],
-                     "your_game": your_game}
-        game_data[game_name] = game_item
+    lobby = LOBBY
+    player = get_player(data)
 
-    emit("set_games", game_data)
+    lobby.set_game_data(player)
 
 
 if __name__ == '__main__':
