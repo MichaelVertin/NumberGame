@@ -1,6 +1,6 @@
 const socket = io();
-let NAME_TOP = "BOB";
-let NAME_BOTTOM = "ALICE";
+let NAME_TOP = "NAME_TOP_FILLER";
+let NAME_BOTTOM = "NAME_BOTTOM_FILLER";
 
 // https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
 function uuidv4() {
@@ -8,15 +8,6 @@ function uuidv4() {
     (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
   );
 }
-
-/*
-if (!localStorage.getItem("customSessionId")) {
-  const newId = uuidv4();  // Or use a custom UUID function
-  localStorage.setItem("customSessionId", newId);
-}
-const SESSION_ID = localStorage.getItem("customSessionId");
-console.log(SESSION_ID);
-*/
 
 if (!sessionStorage.getItem("customSessionId")) {
   const newId = uuidv4();
@@ -34,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     socket.emit("send_move", selections);
   };
   socket.emit("reconnect", {session_id: SESSION_ID});
-  socket.emit("update_state", {session_id: SESSION_ID});
+  socket.emit("on_game_load", {session_id: SESSION_ID});
 });
 
 // card access /////////////////////////////////////////////////////////
@@ -49,7 +40,7 @@ function get_card_obj(card_id) {
 
 function get_field_container(owner_name) {
   let field_name = "";
-  if(owner_name == NAME_BOTTOM) {
+    if(owner_name == NAME_BOTTOM) {
     field_name = ".play-field-self";
   }
   else if (owner_name == NAME_TOP) {
@@ -233,7 +224,7 @@ socket.on('set_names', (data) => {
   // identify top and bottom players
   // if self is in players, put self at top
   // NOTE: This assumes exactly 2 players are provided
-  NAME_TOP = data.other_names[0];
+  NAME_TOP = data.opponent_name;
   NAME_BOTTOM = data.your_name;
 });
 
