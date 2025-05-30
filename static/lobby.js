@@ -58,13 +58,6 @@ function submit_new_game() {
                               "session_id": SESSION_ID }); 
 }
 
-function submit_existing_game() {
-  const game_name = document.getElementById("filter-existing-game").value;
-  
-  socket.emit("join_game", {"game_name": game_name, 
-                            "session_id": SESSION_ID });
-}
-
 socket.on("load_game", () => {
   window.location.href = "/game";
 });
@@ -78,16 +71,10 @@ function set_players() {
 }
 
 socket.on("set_games", (data) => {
-  const game_field = document.getElementById("existing-game-results");
-  let data_to_display = "";
+  remove_game_results();
   Object.entries(data).forEach(([game_name, game_info]) => {
-    data_to_display += `${game_name}: ${game_info.player1} & ${game_info.player2}`;
-    if (game_info.your_game == "True") {
-      data_to_display += " (Your Game)"; // TODO: Error: Does not work"
-    }
-    data_to_display += "<br>";
+    add_game_result(game_name, game_info.player1, game_info.player2);
   });
-  game_field.innerHTML = data_to_display;
 });
 
 socket.on("set_players", (data) => {
@@ -102,6 +89,47 @@ socket.on("set_players", (data) => {
   });
   player_field.innerHTML = data_to_display;
 });
+
+function add_game_result(game_name, player1, player2) {
+console.log(game_name, player1, player2);
+  const container = document.getElementById("existing-game-results");
+
+  const button = document.createElement("button");
+  button.className = "game-result";
+  button.setAttribute("onclick", `select_game("${game_name}")`);
+
+  // First line with game name
+  const gameNameDiv = document.createElement("div");
+  gameNameDiv.textContent = game_name;
+  button.appendChild(gameNameDiv);
+
+  // Player info container
+  const playerContainer = document.createElement("div");
+
+  const player1Div = document.createElement("div");
+  player1Div.className = "game-player";
+  player1Div.innerHTML = `<div>Player 1</div><div>${player1}</div>`;
+
+  const player2Div = document.createElement("div");
+  player2Div.className = "game-player";
+  player2Div.innerHTML = `<div>Player 2</div><div>${player2}</div>`;
+
+  playerContainer.appendChild(player1Div);
+  playerContainer.appendChild(player2Div);
+
+  button.appendChild(playerContainer);
+  container.appendChild(button);
+}
+
+function remove_game_results() {
+  const container = document.getElementById("existing-game-results");
+  container.innerHTML = ""; // Clear all children
+}
+
+function select_game(game_name) {
+  socket.emit("join_game", {"game_name": game_name, 
+                            "session_id": SESSION_ID });
+}
 
 
 

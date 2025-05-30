@@ -2,6 +2,17 @@ const socket = io();
 let NAME_TOP = "NAME_TOP_FILLER";
 let NAME_BOTTOM = "NAME_BOTTOM_FILLER";
 
+// Description:
+let description = `\
+Each player starts with 3 cards. On a players turn, they can draw cards or attack the opponent's cards. At the end of any player's turn, both players will gain 1 card. 
+To draw, only select the deck. This will give the player 2 cards. 
+To attack, select exactly one of the opponent's cards, and any number of your cards. To be successful, the total offense must be at least as large as the defense of the opponent's cards. When this is done, every selected cards will be removed, and the value of the opponent's card will be added to your score. 
+To submit your turn, press the submit button after selecting the cards/deck. 
+The card's format will have two rows. The first row contains <offense> / <defense>. The second contains <value>. 
+`
+
+
+
 // https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
 function uuidv4() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
@@ -26,6 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   socket.emit("reconnect", {session_id: SESSION_ID});
   socket.emit("on_game_load", {session_id: SESSION_ID});
+
+  alert(description);
 });
 
 // card access /////////////////////////////////////////////////////////

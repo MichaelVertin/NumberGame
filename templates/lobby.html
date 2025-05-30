@@ -70,6 +70,17 @@
     height: 100%;
   }
 
+  .game-result {
+    display: block;
+    width: 50%;
+    text-align: left;
+    cursor: pointer;
+  }
+  
+  .game-player {
+    display: flex;
+    justify-content: space-between;
+  }
 
   </style>
 
@@ -92,8 +103,6 @@
           <input type="text" id="filter-player">
         </div>
         <div class="search-results" id="player-results">
-          PLACEHOLDER_P1<br>
-          PLACEHOLDER_P2
         </div>
       </div>
  
@@ -107,8 +116,6 @@
           <input type="text" id="filter-existing-game">
         </div>
         <div class="search-results" id="existing-game-results">
-          PLACEHOLDER_G1<br>
-          PLACEHOLDER_G2
         </div>
         <div class="submit">
           <button class="submit" id="submit-button-existing-game" 
