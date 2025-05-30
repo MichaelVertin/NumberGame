@@ -241,7 +241,9 @@ socket.on('set_names', (data) => {
   NAME_BOTTOM = data.your_name;
 });
 
-
+socket.on('disconnect', () => {
+  alert("Your Session Was Disconnected");
+});
 
 
 

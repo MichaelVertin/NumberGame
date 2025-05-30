@@ -1,7 +1,7 @@
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, render_template, request, session, jsonify
+from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from game_logic import *
 
@@ -19,13 +19,12 @@ def get_turn_obj(data, game):
         raise SelectionError("To draw, only select the deck") # TODO # implement this into javascript
     return turn_obj
 
-# TODO: Delete session on disconnect
 class Session:
-    def __init__(self, session_id):
-        self.session_id = session_id
+    def __init__(self, data):
+        self.session_id = data["session_id"]
         self.sid = None
         self.player = None
-        self.connect()
+        self.update(data)
 
     def set_player(self, player):
         self.player = player
@@ -41,11 +40,16 @@ class Session:
             socketio.emit(method_name, to=self.sid)
 
     # NOTE: Only works when called from socketio.on
-    def connect(self):
+    def update(self, data):
         try:
             self.sid = request.sid
         except:
             self.sid = None
+
+    def disconnect(self):
+        self.emit("disconnect")
+        self.sid = None
+        self.session_id = None
 
 
 class Player:
@@ -54,10 +58,6 @@ class Player:
         self.session = None
         self.game_room = None
 
-    def connect(self, session):
-        # TODO: Disconnect previous session
-        self.session = session
-    
     def get_session(self):
         if not self.session: raise SelectionError("Session Not Initialized")
         return self.session
@@ -119,6 +119,7 @@ class Lobby:
         self.__players.append(player)
     
     def remove_player(self, player):
+        # TODO: Error: This is called when player is not in lobby
         self.__players.remove(player)
 
     def get_player_data(self):
@@ -214,23 +215,54 @@ LOBBY = Lobby()
 SESSIONS = dict()
 def create_session(data):
     session_id = data["session_id"]
-    SESSIONS[session_id] = Session(session_id)
+    print(f"creating session: {session_id}")
+    session = Session(data)
+    SESSIONS[session_id] = session
+    return session
 
 def get_session(data):
     session_id = data["session_id"]
+    print(f"accessing session: {session_id}")
     if session_id not in SESSIONS:
-        SESSIONS[session_id] = Session(session_id)
+        SESSIONS[session_id] = Session(data)
     return SESSIONS[session_id]
 
 def connect(data):
-    session = get_session(data)
-    session.connect()
-    # connect player to session if applicable
     try:
         player = get_player(data)
-        player.connect(session)
     except SelectionError:
-        pass
+        create_session(data)
+        return
+
+    session_id = data["session_id"]
+    print(f"connecting session: {session_id}")
+
+    # check player has session
+    if player and player.session:
+        player_session = player.session
+        # if session_id matches, update the session
+        if player_session.session_id == session_id:
+            player.session.update(data)
+        # if session_id does not match, disconnect, and create a new connection
+        else:
+            player.emit("disconnect")
+            player.session = None
+            del SESSIONS[session_id]
+            player.session = create_session(data)
+    # if player does not have a session, create the session
+    else:
+        player.session = create_session(data)
+        
+    player.session.set_player(player)
+
+def discconnect(data):
+    session_id = data["session_id"]
+    print(f"disconnecting session: {session_id}")
+    session = SESSIONS[session_id]
+    if not session: return
+    if session.player: session.player.disconnect()
+    session.disconnect()
+    del SESSIONS[session_id]
 
 # player access
 PLAYERS = dict()
@@ -252,7 +284,7 @@ def set_player(data):
     player = PLAYERS[player_name]
     
     session.set_player(player)
-    player.connect(session)
+    connect(data)
 
 # game access
 GAME_ROOMS = dict()
