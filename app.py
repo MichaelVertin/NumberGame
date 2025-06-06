@@ -47,7 +47,8 @@ class Session:
             self.sid = None
 
     def disconnect(self):
-        self.emit("disconnect")
+        print(f"Disconnecting {self.sid}")
+        self.emit("force_disconnect")
         self.sid = None
         self.session_id = None
 
@@ -222,9 +223,9 @@ def create_session(data):
 
 def get_session(data):
     session_id = data["session_id"]
-    print(f"accessing session: {session_id}")
+    # print(f"accessing session: {session_id}")
     if session_id not in SESSIONS:
-        SESSIONS[session_id] = Session(data)
+        return create_session(data)
     return SESSIONS[session_id]
 
 def connect(data):
@@ -245,7 +246,7 @@ def connect(data):
             player.session.update(data)
         # if session_id does not match, disconnect, and create a new connection
         else:
-            player.emit("disconnect")
+            player.session.disconnect()
             player.session = None
             del SESSIONS[session_id]
             player.session = create_session(data)
@@ -278,6 +279,7 @@ def get_player(data):
     session = get_session(data)
     return session.get_player()
 
+# TODO: Remove unnecessary connects
 def set_player(data):
     session = get_session(data)
     player_name = data["username"]
@@ -326,7 +328,7 @@ def set_username():
     
     set_player(data)
     connect(data)
-    
+
     return jsonify({"success": True})
 
 @socketio.on('reconnect')
