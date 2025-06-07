@@ -131,7 +131,57 @@ function select_game(game_name) {
                             "session_id": SESSION_ID });
 }
 
+socket.off('disconnect');
+socket.on('disconnect', () => {
+  alert("An Unexpected Server Error Occurred");
+});
 
+socket.off('force_disconnect');
+socket.on('force_disconnect', () => {
+  my_alert("Another Player Has Accessed This Account", () => {
+    window.location.href = "/";
+  });
+});
 
+// alert is not blocking in force_disconnect
+// this function was made with the help of chatgpt to force javascript
+//   to wait for the user to respond to the alert before continuing
+function my_alert(message, callback) {
+  const modalOverlay = document.createElement("div");
+  modalOverlay.style.cssText = `
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
 
+  const modalBox = document.createElement("div");
+  modalBox.style.cssText = `
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    text-align: center;
+  `;
 
+  modalBox.innerHTML = `
+    <p style="margin-bottom: 15px;">${message}</p>
+    <button id="alert-ok-btn" style="
+      padding: 8px 20px;
+      font-size: 1em;
+    ">OK</button>
+  `;
+
+  modalOverlay.appendChild(modalBox);
+  document.body.appendChild(modalOverlay);
+
+  document.getElementById("alert-ok-btn").addEventListener("click", () => {
+    document.body.removeChild(modalOverlay);
+    callback(); // safely redirects after modal is removed
+  });
+}
