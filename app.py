@@ -118,9 +118,11 @@ class Player:
         session.emit(method_name, data)
 
     def disconnect(self):
+        # disconnect the existing session
         if self.session:
             session_id = self.session.session_id
             self.session = None
+            # TODO? This is being called by SessionHandler.disconnect
             SessionHandler.disconnect({"session_id": session_id})
 
 class Lobby:
@@ -131,7 +133,6 @@ class Lobby:
         self.__players.append(player)
     
     def remove_player(self, player):
-        # TODO: Error: This is called when player is not in lobby
         self.__players.remove(player)
 
     def get_player_data(self):
@@ -230,46 +231,48 @@ class SessionHandler:
         session_id = data["session_id"]
         print(f"Connecting Session: {session_id}")
 
+        # if the session is associated with a player, get the player
         try:
             player = PlayerHandler.get(data)
-        # if unable to access player, create a new player
-        # TODO: This doesn't make sense
+        # if there is no player, create a new session
         except SelectionError:
             cls.create(data)
             return
 
+        # get the player's session
         try:
             player_session = player.get_session()
         except SelectionError:
             player_session = None
-        
-        # check player has session
-        if player_session:
-            # if session_id matches, update the session
-            if player_session.session_id == session_id:
-                player_session.update(data)
-            # if session_id does not match, generate a new session
-            else:
-                session = SessionHandler.create(data)
-                player.set_session(session)
-        # if the player does not have a session, create the session
-        else:
-            session = SessionHandler.create(data)
-            player.set_session(session)
 
-        player.get_session().set_player(player)
+        # update the player's session if the session_id matches
+        if player_session and player_session.session_id == session_id:
+            player_session.update(data)
+        # otherwise, player needs a new session
+        else:
+            player_session = cls.create(data)
+            player.set_session(player_session)
+
+        # connect the player's session to the player
+        player_session.set_player(player)
+
 
     @classmethod
     def disconnect(cls, data):
         session_id = data["session_id"]
         print(f"Disconnecting Session: {session_id}")
         session = cls._sessions.get(session_id)
+        
+        # do nothing if no session exists
         if not session: return
+        
+        # disconnect the player if applicable
         player = session.get_player()
         if player: player.disconnect()
+        
+        # disconnect and remove the session
         session.disconnect()
         del cls._sessions[session_id]
-
 
 
 class PlayerHandler:
@@ -278,21 +281,30 @@ class PlayerHandler:
     @classmethod
     def create(cls, data):
         player_name = data["username"]
+        
+        # fail if player already exists
         if player_name in cls._players:
             raise SelectionError("Player Already Exsits")
+        
+        # store a new player object
         player = Player(player_name)
         cls._players[player_name] = player
+        
+        # start the player in the lobby
         LOBBY.add_player(player)
         return player
 
     @classmethod
     def set_player(cls, data):
-        session = SessionHandler.get(data)
-        
         player_name = data["username"]
         player = cls._players.get(player_name)
+        session = SessionHandler.get(data)
+        
+        # fail if the player does not exist
         if not player:
             raise SelectionError("Player Does Not Exist")
+        
+        # link the player to the session
         session.set_player(player)
         player.set_session(session)
 
@@ -315,14 +327,20 @@ class GameRoomHandler:
     
     @classmethod
     def create(cls, data):
+        # set Player1 to the player's name, and Player2 to the opponent's name
         player = PlayerHandler.get(data)
         opponent_name = data["opponent_name"]
         game_name = data["game_name"]
 
+        # fail if the game_name already exists
         if game_name in cls._rooms:
             raise SelectionError("Game Already Exists")
+        
+        # create the game and game_room
         game = NumberGame(player.name, opponent_name)
         cls._rooms[game_name] = GameRoom(game, game_name)
+        
+        # update the lobby's game content
         LOBBY.set_game_data()
 
     @classmethod
@@ -335,6 +353,8 @@ class GameRoomHandler:
     def join_game(cls, data):
         player = PlayerHandler.get(data)
         game_room = cls.get(data)
+        
+        # move player from the lobby to the game
         player.join_game_room(game_room)
         LOBBY.remove_player(player)
 
@@ -374,7 +394,6 @@ def set_username():
     
     PlayerHandler.set_player(data)
 
-    session = SessionHandler.get(data)
     # TODO: Shouldn't need to connect here
     SessionHandler.connect(data)
     
@@ -385,25 +404,25 @@ def reconnect(data):
     SessionHandler.connect(data)
 
 @socketio.on('create_game')
-def create_game_server(data):
+def create_game(data):
     GameRoomHandler.create(data)
 
 @socketio.on('join_game')
-def join_game_server(data):
+def join_game(data):
     GameRoomHandler.join_game(data)
 
 @socketio.on('check_selection')
-def check_selection_server(data):
+def check_selection(data):
     player = PlayerHandler.get(data)
     player.validate_turn(data)
 
 @socketio.on('send_move')
-def send_move_server(data):
+def send_move(data):
     player = PlayerHandler.get(data)
     player.do_turn(data)
 
 @socketio.on('update_state')
-def update_state_server(data):
+def update_state(data):
     player = PlayerHandler.get(data)
     player.set_state()
 
@@ -413,14 +432,12 @@ def on_game_load(data):
     player.on_load_game()
     player.set_state()
 
-# TODO: 
 @socketio.on('get_players')
 def get_players_server(data):
     player = PlayerHandler.get(data)
 
     LOBBY.set_player_data(player)
 
-# TODO: 
 @socketio.on('get_games')
 def get_games_server(data):
     player = PlayerHandler.get(data)
@@ -433,28 +450,4 @@ if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000)
 
 
-
-"""
-Sessions:
-Map<SessionID,Session>
-__init__(request.sid, self.session_id)
-- Created/Assigned on enter lobby
-- Updated on enter enter page
-- self.player assigned when /set_username called
-- TODO: in update, verify session_id, if failed, raise SelectionError
-
-Players:
-Map<Username,Player>
-- Created/Assigned on entered username
-- self.session assigned when /set_username called
-
-Generic Method:
-- Provide SessionID
-
-
-# TODO: Find a way to implement factory/building function/...
-# Monolith?
-#   if the session_id is already associated with a session, use that
-#   otherwise, create a new session
-"""
 
