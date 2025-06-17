@@ -2,128 +2,16 @@ import eventlet
 eventlet.monkey_patch()
 
 from flask import Flask, render_template, request, jsonify
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_socketio import SocketIO
 from game_logic import *
+from session import Session
+from player import Player
+from game_room import GameRoom
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my_secret'
 socketio = SocketIO(app, async_mode='eventlet')
 
-def get_turn_obj(data, game):
-    if data["type"] == "draw":
-        turn_obj = Turn_Draw(game)
-    elif data["type"] == "attack":
-        turn_obj = Turn_Attack(game, 
-                              data["cards"])
-    else:
-        raise SelectionError("To draw, only select the deck") # TODO # implement this into javascript
-    return turn_obj
-
-class Session:
-    def __init__(self, data):
-        self.session_id = data["session_id"]
-        self.sid = None
-        self.player = None
-
-    def set_player(self, player):
-        self.player = player
-
-    def get_player(self):
-        if not self.player: raise SelectionError("Session Has No Associated Player")
-        return self.player
-
-    def get_id(self):
-        return self.session_id
-
-    def emit(self, method_name, data = None):
-        if self.sid is None:
-            print("WARNING: self.sid is None")
-            return
-        if data:
-            socketio.emit(method_name, data, to=self.sid)
-        else:
-            socketio.emit(method_name, to=self.sid)
-
-    # NOTE: Only works when called from socketio.on
-    def update(self, data):
-        try:
-            self.sid = request.sid
-        except:
-            raise ValueError("Session.update must be called from a socketio context")
-
-    def disconnect(self, message = "Session Was Disconnected Intentionally"):
-        self.emit("force_disconnect", {"message": message})
-        self.sid = None
-        self.session_id = None
-
-class Player:
-    def __init__(self, player_name):
-        self.name = player_name
-        self.session = None
-        self.game_room = None
-
-    def get_session(self):
-        if not self.session: raise SelectionError("Session Not Initialized")
-        return self.session
-
-    def set_session(self, session):
-        print(f"Setting Session for {self.name}")
-        self.session = session
-
-    def get_game_room(self):
-        if not self.game_room: raise SelectionError("Not In A Game")
-        return self.game_room
-
-    def join_game_room(self, game_room):
-        self.game_room = game_room
-        self.game_room.add_player(self)
-        self.get_session().emit("load_game")
-
-    def set_state(self, state = None):
-        if not state: state = self.get_game_room().get_state()
-        session = self.get_session()
-        session.emit("set_state", state)
-
-    def do_turn(self, data):
-        game_room = self.get_game_room()
-        session = self.get_session()
-        try:
-            game_room.do_turn(self, data)
-            session.emit("set_selection_status", {"status": "True", "message": "Turn Completed Successfully"})
-        except SelectionError as e:
-            session.emit("set_selection_status", {"status": "False", "message": str(e)})
-
-    def validate_turn(self, data):
-        game_room = self.get_game_room()
-        session = self.get_session()
-        try:
-            status = game_room.validate_turn(self, data)
-            session.emit("set_selection_status", status)
-
-        except SelectionError as e:
-            session.emit("set_selection_status", {"status": "False", "message":str(e)})
-
-    def on_load_game(self):
-        game_room = self.get_game_room()
-        players = game_room.get_players()
-        your_name = self.name
-        if your_name not in players:
-            your_name = players[0]
-
-        data = {"your_name": your_name, 
-                "opponent_name": [name for name in players if name != your_name][0]
-               }
-        self.get_session().emit("set_names", data)
-
-    def emit(self, method_name, data = None):
-        session = self.get_session()
-        session.emit(method_name, data)
-
-    def abandon_session(self):
-        print(f"Abandoning Session {self.session} for {self.name}")
-        prev_session = self.session
-        self.session = None
-        return prev_session
 
 class Lobby:
     def __init__(self):
@@ -165,47 +53,6 @@ class Lobby:
 
 
 
-class GameRoom:
-    def __init__(self, game, name):
-        self.__game = game
-        self.__room_id = name
-        self.__players = list()
-        
-    def validate_turn(self, player, data):
-        if self.__game.get_active_player() != player.name:
-            raise SelectionError("Not Your Turn")
-        turn_obj = get_turn_obj(data, self.__game)
-        status = turn_obj.validate()
-        return status
-
-    def do_turn(self, player, data):
-        if self.__game.get_active_player() != player.name:
-            raise SelectionError("Not Your Turn")
-        turn_obj = get_turn_obj(data, self.__game)
-        status = turn_obj.execute()
-        self.update_players()
-
-    def add_player(self, player):
-        self.__players.append(player)
-
-    def remove_player(self, player):
-        self.__players.remove(player)
-
-    def update_players(self):
-        game = self.__game
-        state = game.get_state()
-        for player in self.__players:
-            player.set_state(state)
-
-    def get_players(self):
-        game = self.__game
-        return [game.get_active_player(), game.get_inactive_player()]
-
-    def get_state(self):
-        game = self.__game
-        state = game.get_state()
-        return state
-
 class SessionManager:
     _sessions = dict()
 
@@ -227,13 +74,12 @@ class SessionManager:
 
         # disconnect the active session
         prev_session = player.abandon_session()
-        print(f"prev_session: {prev_session}")
         if prev_session:
             print(f"Disconnecting Session: {prev_session.get_id()}")
             del cls._sessions[prev_session.get_id()]
             prev_session.disconnect(message="Another session was established for this player")
 
-        session = Session(data)
+        session = Session(data, socketio)
         player.set_session(session)
         session.set_player(player)
 
