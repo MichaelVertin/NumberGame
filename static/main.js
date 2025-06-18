@@ -243,7 +243,9 @@ socket.on('set_names', (data) => {
 
 socket.off('disconnect');
 socket.on('disconnect', () => {
-  alert("An Unexpected Server Error Occurred");
+  my_alert("An Unexpected Server Error Occurred", () => {
+    window.location.href = "/";
+  });
 });
 
 socket.off('force_disconnect');
