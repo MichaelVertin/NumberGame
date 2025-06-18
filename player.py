@@ -7,7 +7,7 @@ class Player:
         self.game_room = None
 
     def get_session(self):
-        if not self.session: raise SelectionError("Session Not Initialized")
+        if not self.session: raise PlayerHasNoSessionError()
         return self.session
 
     def set_session(self, session):
@@ -15,7 +15,7 @@ class Player:
         self.session = session
 
     def get_game_room(self):
-        if not self.game_room: raise SelectionError("Not In A Game")
+        if not self.game_room: raise GameDoesNotExistError("Not In A Game")
         return self.game_room
 
     def join_game_room(self, game_room):
@@ -34,17 +34,18 @@ class Player:
         try:
             game_room.do_turn(self, data)
             session.emit("set_selection_status", {"status": "True", "message": "Turn Completed Successfully"})
-        except SelectionError as e:
+        except InvalidMoveError as e:
             session.emit("set_selection_status", {"status": "False", "message": str(e)})
 
     def validate_turn(self, data):
         game_room = self.get_game_room()
         session = self.get_session()
+        # TODO: Should this be in the main program? 
         try:
             status = game_room.validate_turn(self, data)
             session.emit("set_selection_status", status)
 
-        except SelectionError as e:
+        except InvalidMoveError as e:
             session.emit("set_selection_status", {"status": "False", "message":str(e)})
 
     def on_load_game(self):

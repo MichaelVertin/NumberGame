@@ -69,11 +69,11 @@ class Turn_Attack(Turn):
 
     def validate(self):
         if len(self.inactive_cards) != 1:
-            raise SelectionError("Select exactly one of the opponent's cards")
+            raise InvalidMoveError("Select exactly one of the opponent's cards")
         if len(self.active_cards) == 0:
-            raise SelectionError("Select at least one of your cards")
+            raise InvalidMoveError("Select at least one of your cards")
         if self.active_value < self.inactive_value:
-            raise SelectionError("Your value is not large enough")
+            raise InvalidMoveError("Your value is not large enough")
         return {"status": "True", "message": "Selections are Valid"}
 
 

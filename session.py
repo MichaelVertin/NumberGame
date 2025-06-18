@@ -30,7 +30,6 @@ class Session:
     # NOTE: Only works when called from socketio.on
     def update(self, data):
         try:
-            # print(f"sid = {request.sid}")
             self.sid = request.sid
         except:
             raise ValueError("Session.update must be called from a socketio context")
