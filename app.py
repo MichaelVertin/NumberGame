@@ -7,6 +7,7 @@ from game_logic import *
 from session import Session
 from player import Player
 from game_room import GameRoom
+from game_errors import *
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my_secret'
@@ -69,7 +70,7 @@ class SessionManager:
         # TODO: move player creation elsewhere
         try:
             player = PlayerHandler.create(data)
-        except SelectionError:
+        except PlayerAlreadyExistsError:
             player = PlayerHandler.get(data)
 
         # disconnect the active session
@@ -98,7 +99,7 @@ class SessionManager:
         session_id = data["session_id"]
         print(f"Accessing Session: {session_id}")
         session = cls._sessions.get(session_id)
-        if not session: raise SelectionError(f"Session {session_id} is not recongnized")
+        if not session: raise SessionAccessError()
         return session
 
     # get the player for the active session
@@ -117,7 +118,7 @@ class PlayerHandler:
         
         # fail if player already exists
         if player_name in cls._players:
-            raise SelectionError("Player Already Exsits")
+            raise PlayerAlreadyExistsError(player_name)
         
         # store a new player object
         player = Player(player_name)
@@ -139,7 +140,7 @@ class PlayerHandler:
     def get(cls, data):
         player_name = data["username"]
         if player_name not in cls._players:
-            raise SelectionError("Player Does Not Exist")
+            raise PlayerDoesNotExistError(player_name)
 
         return cls._players[player_name]
 
@@ -156,7 +157,7 @@ class GameRoomHandler:
 
         # fail if the game_name already exists
         if game_name in cls._rooms:
-            raise SelectionError("Game Already Exists")
+            raise GameAlreadyExistsError(game_name)
         
         # create the game and game_room
         game = NumberGame(player.name, opponent_name)
@@ -257,9 +258,20 @@ def get_games_server(data):
     LOBBY.set_game_data(player)
 
 
+
+@socketio.on_error_default
+def socket_io_error_handle(e):
+    if isinstance(e, LogicError):
+        socketio.emit("on_error", {"message": str(e)})
+        raise e
+    else:
+        socketio.emit("on_error", {"message": "An Unexpected Error Occurred"})
+        raise e
+
+
+
 if __name__ == '__main__':
     print("Running on port 5000")
     socketio.run(app, host='0.0.0.0', port=5000)
-
 
 

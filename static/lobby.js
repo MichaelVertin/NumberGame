@@ -185,3 +185,12 @@ function my_alert(message, callback) {
     callback(); // safely redirects after modal is removed
   });
 }
+
+
+socket.off('on_error');
+socket.on('on_error', (data) => {
+  my_alert(data.message);
+});
+
+
+

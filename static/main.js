@@ -253,6 +253,12 @@ socket.on('force_disconnect', () => {
   });
 });
 
+socket.off('on_error');
+socket.on('on_error', (data) => {
+  my_alert(data.message);
+});
+
+
 // alert is not blocking in force_disconnect
 // this function was made with the help of chatgpt to force javascript
 //   to wait for the user to respond to the alert before continuing

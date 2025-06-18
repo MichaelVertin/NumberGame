@@ -8,7 +8,7 @@ def get_turn_obj(data, game):
         turn_obj = Turn_Attack(game, 
                               data["cards"])
     else:
-        raise SelectionError("To draw, only select the deck") # TODO # implement this into javascript
+        raise MoveNotRecognizedError(data["type"]) # TODO # implement this into javascript
     return turn_obj
 
 
@@ -20,14 +20,14 @@ class GameRoom:
         
     def validate_turn(self, player, data):
         if self.__game.get_active_player() != player.name:
-            raise SelectionError("Not Your Turn")
+            raise NotActivePlayerError()
         turn_obj = get_turn_obj(data, self.__game)
         status = turn_obj.validate()
         return status
 
     def do_turn(self, player, data):
         if self.__game.get_active_player() != player.name:
-            raise SelectionError("Not Your Turn")
+            raise NotActivePlayerError()
         turn_obj = get_turn_obj(data, self.__game)
         status = turn_obj.execute()
         self.update_players()
