@@ -258,6 +258,18 @@ def get_games_server(data):
     LOBBY.set_game_data(player)
 
 
+
+@socketio.on_error_default
+def socket_io_error_handle(e):
+    if isinstance(e, LogicError):
+        socketio.emit("on_error", {"message": str(e)})
+        raise e
+    else:
+        socketio.emit("on_error", {"message": "An Unexpected Error Occurred"})
+        raise e
+
+
+
 if __name__ == '__main__':
     print("Running on port 5000")
     socketio.run(app, host='0.0.0.0', port=5000)
