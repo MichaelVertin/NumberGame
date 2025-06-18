@@ -210,6 +210,9 @@ def set_username():
     data = request.get_json()
     SessionManager.initialize_session(data)
     
+    # TODO: Move this into PlayerHander.create()
+    LOBBY.set_player_data()
+    
     return jsonify({"success": True})
 
 @socketio.on('reconnect')
