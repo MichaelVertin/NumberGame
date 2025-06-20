@@ -36,6 +36,12 @@ class SessionNotEstablishedError (SessionAccessError):
     def __init__(self, message = "No session was established"):
         super().__init__(message)
 
+# Session Disconnect Error:
+#  Raised when unable to disconnect a session
+class SessionDisconnectError (SessionError):
+    def __init__(self, message = "Failed to disconnect session"):
+        super().__init__(message)
+
 # Player Has No Session Error:
 #  Raised when a player has no associated session
 class PlayerHasNoSessionError (SessionAccessError):
