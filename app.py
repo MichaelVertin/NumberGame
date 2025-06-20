@@ -108,6 +108,24 @@ class SessionManager:
         session = cls.get(data)
         return session.get_player()
 
+    # disconnects a session
+    # if data is provided, disconnects the session with its session_id
+    # otherwise, disconnects the active session
+    @classmethod
+    def disconnect_session(cls, sid):
+        session = None
+
+        for session_id, session_obj in cls._sessions.items():
+            if session_obj.is_active(sid):
+                session = session_obj
+                break
+        
+        if not session:
+            pass # raise SessionDisconnectError()
+        else:
+            del cls._sessions[session]
+
+
 
 class PlayerHandler:
     _players = dict()
@@ -210,6 +228,9 @@ def set_username():
     data = request.get_json()
     SessionManager.initialize_session(data)
     
+    # TODO: Move this into PlayerHander.create()
+    LOBBY.set_player_data()
+    
     return jsonify({"success": True})
 
 @socketio.on('reconnect')
@@ -257,6 +278,10 @@ def get_games_server(data):
 
     LOBBY.set_game_data(player)
 
+@socketio.on('disconnect')
+def on_disconnect(sid):
+    SessionManager.disconnect_session(sid)
+    print(SessionManager._sessions)
 
 
 @socketio.on_error_default

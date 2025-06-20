@@ -34,6 +34,9 @@ class Session:
         except:
             raise ValueError("Session.update must be called from a socketio context")
 
+    def is_active(self, sid):
+        return sid == self.sid
+
     def disconnect(self, message = "Session Was Disconnected Intentionally"):
         self.emit("force_disconnect", {"message": message})
         self.sid = None

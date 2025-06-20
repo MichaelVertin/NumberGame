@@ -32,8 +32,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // TODO? Wait for player to be created correctly
   socket.emit("reconnect", {session_id: SESSION_ID})
-  set_games();
-  set_players();
+  update_existing_games();
+  update_existing_players();
 });
 
 async function create_player(username) {
@@ -62,30 +62,39 @@ socket.on("load_game", () => {
   window.location.href = "/game";
 });
 
-function set_games() {
-  socket.emit("get_games", {session_id: SESSION_ID});
-}
-
-function set_players() {
-  socket.emit("get_players", {session_id: SESSION_ID} );
+function update_existing_games(typed_str) {
+  socket.emit("get_games", {session_id: SESSION_ID});  
 }
 
 socket.on("set_games", (data) => {
   remove_game_results();
+  const name_filter = document.getElementById("filter-existing-games").value;
+
   Object.entries(data).forEach(([game_name, game_info]) => {
-    add_game_result(game_name, game_info.player1, game_info.player2);
+    if (game_name.startsWith(name_filter)) {
+      add_game_result(game_name, game_info.player1, game_info.player2);
+    }
   });
 });
 
+
+function update_existing_players() {
+  socket.emit("get_players", {session_id: SESSION_ID});
+}
+
 socket.on("set_players", (data) => {
   const player_field = document.getElementById("player-results");
+  const name_filter = document.getElementById("filter-existing-players").value;
+
   let data_to_display = "";
   Object.entries(data).forEach(([player_name, player_info]) => {
-    data_to_display += player_name;
-    if (player_info.is_you == "True") {
-      data_to_display += " (you)";
+    if (player_name.startsWith(name_filter)) {
+      data_to_display += player_name;
+      if (player_info.is_you == "True") {
+        data_to_display += " (you)";
+      }
+      data_to_display += "<br>";
     }
-    data_to_display += "<br>";
   });
   player_field.innerHTML = data_to_display;
 });
@@ -130,6 +139,7 @@ function select_game(game_name) {
   socket.emit("join_game", {"game_name": game_name, 
                             "session_id": SESSION_ID });
 }
+
 
 socket.off('disconnect');
 socket.on('disconnect', () => {

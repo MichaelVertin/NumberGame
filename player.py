@@ -7,7 +7,7 @@ class Player:
         self.game_room = None
 
     def get_session(self):
-        if not self.session: raise PlayerHasNoSessionError()
+        if not self.session: raise PlayerHasNoSessionError(self.name)
         return self.session
 
     def set_session(self, session):

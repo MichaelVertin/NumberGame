@@ -100,7 +100,8 @@
           <H2>Players</H2>
         </div>
         <div class="filter">
-          <input type="text" id="filter-player">
+          <input name="player name" onInput = "update_existing_players();" id="filter-existing-players" type="text">
+          </input>
         </div>
         <div class="search-results" id="player-results">
         </div>
@@ -113,15 +114,10 @@
           <H2>Existing Game</H2>
         </div>
         <div class="filter"> 
-          <input type="text" id="filter-existing-game">
+          <input name="existing game" onInput = "update_existing_games();" id="filter-existing-games" type="text">
+          </input>
         </div>
         <div class="search-results" id="existing-game-results">
-        </div>
-        <div class="submit">
-          <button class="submit" id="submit-button-existing-game" 
-              onclick="submit_existing_game()">
-            Submit
-          </button>
         </div>
       </div>
 
@@ -139,6 +135,7 @@
           <div class="opponent-name">
             Opponent's Name:
             <input type="text" id="opponent-name">
+            </input>
           </div>
           <div class="game-name">
             Game's Name:
